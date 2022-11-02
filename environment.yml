@@ -345,4 +345,6 @@ dependencies:
   - zope=1.0=py38hca03da5_1
   - zope.interface=5.4.0=py38h1a28f6b_0
   - zstd=1.5.2=h8574219_0
+  - pip:
+    - torch==1.13.0
 prefix: /opt/homebrew/Caskroom/miniforge/base/envs/ebm4dg
