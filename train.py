@@ -16,6 +16,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from tqdm.notebook import tqdm
 from torch.utils.data import DataLoader
+import data as d
 
 SUPPORTED_MODELS = ['EBM_Simple']
 SUPPORTED_OPTIMIZERS = ['sgd', 'adam']
@@ -35,6 +36,9 @@ class RandomData(torch.utils.data.IterableDataset):
             x = torch.randn(10)
             target = torch.randint(0,1,(1,))
             yield x, target
+    
+    def haha(self):
+        print('haha')
 
 def cross_entropy(energies, *args, **kwargs):
     return F.cross_entropy(-1*energies, *args, **kwargs)
@@ -102,6 +106,10 @@ def parse_opt():
     parser.add_argument('--batch_size', type=int, default=10, help='batch size during training')
     parser.add_argument('--epochs', type=int, default=50, help='number of epochs')
     parser.add_argument('--optimizer', type=str, default='sgd', help='optimization algorithm (default is sgd)')
+    parser.add_argument('--num_centers_train', type=int, default=2, help='number of synthetic data domains in training data')
+    parser.add_argument('--num_centers_val', type=int, default=1, help='number of synthetic data domains in val data')
+    parser.add_argument('--train_size', type=int, default=1000, help='number of training data samples')
+    parser.add_argument('--val_size', type=int, default=100, help='number of validation data samples')
     return parser.parse_args()
 
 def main(opt):
@@ -128,7 +136,7 @@ def main(opt):
         print("Validation accuracies:", val_accs)
     elif opt.test_mode == 1:
         # TODO - incorporate synthetic data
-        training_data = None
+        training_data = d.
         val_data = None
         # end todo
         
