@@ -54,10 +54,11 @@ def plot_data(data, labels):
 
 class TestingData(torch.utils.data.IterableDataset):
     
-    def __init__(self, n=300, num_centers=3, rng_of_centers=6, rng_of_radii=1):
+    def __init__(self, n=300, num_centers=3, rng_of_centers=6, rng_of_radii=1, hardcoded=false):
         self.n = n
         self.centers = self.__gen_centers(num_centers, rng_of_centers)
         self.radii = self.__gen_radii(num_centers, rng_of_radii)
+        self.hardcoded = hardcoded
     
     def __len__(self):
         return self.n
@@ -78,6 +79,8 @@ class TestingData(torch.utils.data.IterableDataset):
 
     def __gen_centers(self, n, rng):
         centers = np.zeros((n, 3))
+        if hardcoded:
+            return centers
         for i in range(0, n):
             # random center between -3 and 3
             center = np.random.rand(3) * (rng * 2) - rng
@@ -93,11 +96,14 @@ class TestingData(torch.utils.data.IterableDataset):
         return radii
     
     
-
-# train = TestingData(3000, 2, 6)
-# train_dataloader = DataLoader(train, batch_size=3000)
-# images, labels = next(iter(train_dataloader))
-# print(images, labels)
+np.random.seed(0)
+# np.random.rand(3)
+train = TestingData(1000, 2, 6)
+train_dataloader = DataLoader(train, batch_size=3000)
+images, labels = next(iter(train_dataloader))
+unique, counts = np.unique(labels, return_counts=True)
+d = dict(zip(unique, counts))
+print(d[1]/ d[0])
 # plot_data(images,labels)
 
 # # generate data
