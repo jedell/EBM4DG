@@ -54,7 +54,7 @@ def plot_data(data, labels):
 
 class TestingData(torch.utils.data.IterableDataset):
     
-    def __init__(self, n=300, num_centers=3, rng_of_centers=6, rng_of_radii=1, hardcoded=false):
+    def __init__(self, n=300, num_centers=3, rng_of_centers=6, rng_of_radii=1, hardcoded=False):
         self.n = n
         self.centers = self.__gen_centers(num_centers, rng_of_centers)
         self.radii = self.__gen_radii(num_centers, rng_of_radii)
