@@ -79,7 +79,7 @@ class TestingData(torch.utils.data.IterableDataset):
 
     def __gen_centers(self, n, rng):
         centers = np.zeros((n, 3))
-        if hardcoded:
+        if self.hardcoded:
             return centers
         for i in range(0, n):
             # random center between -3 and 3
