@@ -36,7 +36,7 @@ def assign_labels(data, labels, centers, r):
         # add noise from normal distribution with mean 0 and standard deviation 0.1 to labels
         labels[i] = labels[i] + np.random.normal(0, r[i//100, 0]/2)
         # use activation function to assign binary labels
-        if labels[i] > 0.5:
+        if labels[i] > 0.4:
             labels[i] = 1
         else:
             labels[i] = 0
@@ -53,3 +53,13 @@ def plot_data(data, labels):
 data, labels = generate_data()
 # plot data
 plot_data(data, labels)
+
+plot_data(data[:200], labels[:200])
+plot_data(data[200:], labels[200:])
+
+# export data and labels to csv
+np.savetxt("X_train.csv", data[:200], delimiter=",")
+np.savetxt("y_train.csv", labels[:200], delimiter=",")
+
+np.savetxt("X_val.csv", data[200:], delimiter=",")
+np.savetxt("y_val.csv", labels[200:], delimiter=",")
