@@ -1,6 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+from torch.utils.data import DataLoader
+import torch
+
 
 def generate_hypersphere(center, radius, n_points):
     data = np.zeros((n_points, 3))
@@ -49,17 +52,65 @@ def plot_data(data, labels):
     ax.scatter(data[:, 0], data[:, 1], data[:, 2], c=labels)
     plt.show()
 
-# generate data
-data, labels = generate_data()
-# plot data
-plot_data(data, labels)
+class TestingData(torch.utils.data.IterableDataset):
+    
+    def __init__(self, n=300, num_centers=3, rng_of_centers=6, rng_of_radii=1):
+        self.n = n
+        self.centers = self.__gen_centers(num_centers, rng_of_centers)
+        self.radii = self.__gen_radii(num_centers, rng_of_radii)
+    
+    def __len__(self):
+        return self.n
+    
+    def __iter__(self):
+        for i in range(self.n):
+            index = i % len(self.centers)
+            center = self.centers[index]
+            radius = self.radii[index]
+            x = np.random.randn(3) * radius + center
+            target = -np.log(1/(1 + np.exp(-np.linalg.norm(x - center)))) + (radius - np.linalg.norm(x - center))
+            target = target + np.random.normal(0, radius/2)
+            if target > 0.4:
+                target = 1
+            else:
+                target = 0
+            yield x, target
 
-plot_data(data[:200], labels[:200])
-plot_data(data[200:], labels[200:])
+    def __gen_centers(self, n, rng):
+        centers = np.zeros((n, 3))
+        for i in range(0, n):
+            # random center between -3 and 3
+            center = np.random.rand(3) * (rng * 2) - rng
+            centers[i, :] = center
+        return centers
+    
+    def __gen_radii(self, n, rng):
+        radii = np.zeros((3, 1))
+        for i in range(0, n):
+            radius = np.random.rand(1) + 1 # fix to increase rang of centers
+            radii[i, :] = radius
+            # do cutoff
+        return radii
+    
+    
 
-# export data and labels to csv
-np.savetxt("X_train.csv", data[:200], delimiter=",")
-np.savetxt("y_train.csv", labels[:200], delimiter=",")
+# train = TestingData(3000, 2, 6)
+# train_dataloader = DataLoader(train, batch_size=3000)
+# images, labels = next(iter(train_dataloader))
+# print(images, labels)
+# plot_data(images,labels)
 
-np.savetxt("X_val.csv", data[200:], delimiter=",")
-np.savetxt("y_val.csv", labels[200:], delimiter=",")
+# # generate data
+# data, labels = generate_data()
+# # plot data
+# plot_data(data, labels)
+
+# plot_data(data[:200], labels[:200])
+# plot_data(data[200:], labels[200:])
+
+# # export data and labels to csv
+# np.savetxt("X_train.csv", data[:200], delimiter=",")
+# np.savetxt("y_train.csv", labels[:200], delimiter=",")
+
+# np.savetxt("X_val.csv", data[200:], delimiter=",")
+# np.savetxt("y_val.csv", labels[200:], delimiter=",")
