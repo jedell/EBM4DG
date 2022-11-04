@@ -18,10 +18,11 @@ from tqdm.notebook import tqdm
 from torch.utils.data import DataLoader
 
 SUPPORTED_MODELS = ['EBM_Simple']
+SUPPORTED_OPTIMIZERS = ['sgd', 'adam']
 
 
 # This dataset is only used for simple smoke testing
-class TestingData(torch.utils.data.IterableDataset):
+class RandomData(torch.utils.data.IterableDataset):
     
     def __init__(self, n):
         self.n = n
@@ -92,24 +93,30 @@ def parse_opt():
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', type=str, default='EBM_Simple', help='EBM_Simple')
     parser.add_argument('--data', type=str, default='', help='path to data directory (data should be in .csv)')
+    parser.add_argument('--n_infeatures', type=int, default=-1, help='dimension of inputs (x)')
     parser.add_argument('--n_hidden1', type=int, default=100, help='number of features in first hidden layer')
     parser.add_argument('--n_hidden2', type=int, default=50, help='number of features in second hidden layer')
-    parser.add_argument('--test_mode', type=int, default=0, help='for testing purposes only')
+    parser.add_argument('--n_classes', type=int, default=-1, help='number of classes')
+    parser.add_argument('--test_mode', type=int, default=0, help='-1 for pure smoke testing; 1 for synthetic domain-different data')
     parser.add_argument('--learning_rate', type=float, default=0.01, help='learning rate for optimization algorithm')
     parser.add_argument('--batch_size', type=int, default=10, help='batch size during training')
     parser.add_argument('--epochs', type=int, default=50, help='number of epochs')
+    parser.add_argument('--optimizer', type=str, default='sgd', help='optimization algorithm (default is sgd)')
     return parser.parse_args()
 
 def main(opt):
     if opt.model not in SUPPORTED_MODELS:
-        print("Supported models", SUPPORTED_MODELS)
+        print("Supported models:", SUPPORTED_MODELS)
         raise ValueError(opt.model + ' not supported. See list above.')
-    if opt.test_mode:
-        training_data = TestingData(1000)
+    if opt.test_mode == -1:
+        training_data = RandomData(1000)
         train_dataloader = DataLoader(training_data, batch_size=10)
-        val_data = TestingData(100)
+        val_data = RandomData(100)
         val_dataloader = DataLoader(val_data, batch_size=100)
-        model = archs.EBM_Simple(10, 100, 50, 2, test_mode=True)
+        model = archs.EBM_Simple(input_size = 10,
+                                 n_hidden1 = 100,
+                                 n_hidden2 = 50,
+                                 output_size = 2)
         optimizer = torch.optim.SGD(params=model.parameters(), lr = 0.01)
         criterion = cross_entropy
         train_losses, val_losses, train_accs, val_accs = train(25, model, optimizer, criterion, train_dataloader, val_dataloader,
@@ -119,15 +126,40 @@ def main(opt):
         print("Validation losses:", val_losses)
         print("Train accuracies:", train_accs)
         print("Validation accuracies:", val_accs)
-    else:
-        X_train = torch.from_numpy(np.genfromtext(opt.data+"/X_train.csv", delimiter=","))
-        y_train = torch.from_numpy(np.genfromtext(opt.data+"/y_train.csv", delimiter=","))
-        X_val = torch.from_numpy(np.genfromtext(opt.data+"/X_val.csv", delimiter=","))
-        y_val = torch.from_numpy(np.genfromtext(opt.data+"/y_val.csv", delimiter=","))
-        input_size = X_train.shape[1]
-        output_size = y_train.shape[0]
-        if opt.model == 'EBM_Simple': model = archs.EBM_Simple(input_size, opt.n_hidden1, opt.n_hidden2, output_size)
-
+    elif opt.test_mode == 1:
+        # TODO - incorporate synthetic data
+        training_data = None
+        val_data = None
+        # end todo
+        
+        train_dataloader = DataLoader(training_data, batch_size=opt.batch_size)
+        val_dataloader = DataLoader(val_data, batch_size = len(val_data))
+        
+        model = archs.EBM_Simple(input_size = opt.n_infeatures,
+                                 n_hidden1 = opt.n_hidden1,
+                                 n_hidden2 = opt.n_hidden2,
+                                 output_size = opt.n_classes)
+        if opt.optimizer == 'sgd':
+            optimizer = torch.optim.SGD(params=model.parameters(), lr = opt.learning_rate)
+        elif opt.optimizer == 'adam':
+            optimizer = torch.optim.Adam(params=model.parameters(), lr = opt.learning_rate)
+        else:
+            print("Suppported optimizers:", SUPPORTED_OPTIMIZERS)
+            raise ValueError(opt.optimizer + ' not supported. See list above.')
+        criterion = cross_entropy
+        train_losses, val_losses, train_accs, val_accs = train(epochs = opt.epochs,
+                                                               model = model,
+                                                               optimizer = optimizer,
+                                                               criterion = criterion,
+                                                               train_dataloader = train_dataloader,
+                                                               val_dataloader = val_dataloader,
+                                                               train_size = len(training_data),
+                                                               val_size = len(val_data))
+        print("Training successful")
+        print("Train losses:", train_losses)
+        print("Validation losses:", val_losses)
+        print("Train accuracies:", train_accs)
+        print("Validation accuracies:", val_accs)
 
 
 if __name__ == "__main__":
