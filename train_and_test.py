@@ -4,6 +4,9 @@ import tqdm
 import datetime
 from utils import *
 
+# Standard training loop for both ResNet and EBM.
+# Note the use of the domain label in the training loop and the call to dom_loss.backward() to train via the domain classifier.
+
 
 def train(epochs, model, train_dataloader, val_dataloader, dataset_name, lr, save_dir, device, ebm=False):
     print("Starting training ...")
@@ -89,16 +92,12 @@ def train(epochs, model, train_dataloader, val_dataloader, dataset_name, lr, sav
             if ebm:
                 pred, _ = model(image)
                 class_loss = loss_fn(pred, label)
-                # dom_loss = dom_loss_fn(dom_pred, dom_label)
-                # neg_dom_loss = -dom_loss
-                # neg_dom_loss.backward(retain_graph=True)
+
                 test_iter_loss += class_loss.item()
-                # dom_iter_loss += dom_loss.item()
                 ebm_class_predictions = torch.argmax(pred, dim = 1).float()
                 total += label.size(0)
                 correct += torch.eq(label, ebm_class_predictions).sum().item()
                 print("NUM CORRECT ebm:", correct, "/", total)
-                # accuracy = 100 * correct / total
             else:
                 pred = model(image)
                 loss = loss_fn(pred, label)
@@ -120,11 +119,6 @@ def get_maps(model, val_dataloader, device, ebm, save_dir):
         if ebm:
             pred, _ = model(image)
             saliency(image, pred, count, save_dir)
-            # dom_loss = dom_loss_fn(dom_pred, dom_label)
-            # neg_dom_loss = -dom_loss
-            # neg_dom_loss.backward(retain_graph=True)
-            # dom_iter_loss += dom_loss.item()
-            # accuracy = 100 * correct / total
         else:
             pred = model(image)
             saliency(image, pred, count, save_dir)
@@ -148,17 +142,13 @@ def test(epochs, model, train_dataloader, val_dataloader, dataset_name, lr, save
         if ebm:
             pred, _ = model(image)
             class_loss = loss_fn(pred, label)
-            # dom_loss = dom_loss_fn(dom_pred, dom_label)
-            # neg_dom_loss = -dom_loss
-            # neg_dom_loss.backward(retain_graph=True)
+
             test_iter_loss += class_loss.item()
-            # dom_iter_loss += dom_loss.item()
             ebm_class_predictions = torch.argmax(pred, dim = 1).float()
             print(label, ebm_class_predictions)
             total += label.size(0)
             correct += torch.eq(label, ebm_class_predictions).sum().item()
             print("NUM CORRECT:", correct, "/", total)
-            # accuracy = 100 * correct / total
         else:
             pred = model(image)
             loss = loss_fn(pred, label)
