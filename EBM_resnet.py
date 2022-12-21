@@ -49,11 +49,11 @@ class Block(nn.Module):
         return x
 
 
-class ResNet(nn.Module):
+class ResNetEBM(nn.Module):
     def __init__(self, num_layers, block, image_channels, num_classes):
         assert num_layers in [18, 34, 50, 101, 152], f'ResNet{num_layers}: Unknown architecture! Number of layers has ' \
                                                      f'to be 18, 34, 50, 101, or 152 '
-        super(ResNet, self).__init__()
+        super(ResNetEBM, self).__init__()
         if num_layers < 50:
             self.expansion = 1
         else:
@@ -79,6 +79,7 @@ class ResNet(nn.Module):
         self.layer4 = self.make_layers(num_layers, block, layers[3], intermediate_channels=512, stride=2)
 
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        self.domain_classifier = nn.Linear(512 * self.expansion, 2)
         self.fc = nn.Linear(512 * self.expansion, num_classes)
 
     def forward(self, x):
@@ -94,8 +95,9 @@ class ResNet(nn.Module):
 
         x = self.avgpool(x)
         x = x.reshape(x.shape[0], -1)
-        x = self.fc(x)
-        return torch.sigmoid(x)
+        cls_output = self.fc(x)
+        dom_output = self.domain_classifier(x)
+        return cls_output, dom_output
 
     def make_layers(self, num_layers, block, num_residual_blocks, intermediate_channels, stride):
         layers = []
@@ -109,27 +111,27 @@ class ResNet(nn.Module):
         return nn.Sequential(*layers)
 
 
-def ResNet18(img_channels=3, num_classes=1000):
-    return ResNet(18, Block, img_channels, num_classes)
+def ResNetEBM18(img_channels=3, num_classes=1000):
+    return ResNetEBM(18, Block, img_channels, num_classes)
 
 
-def ResNet34(img_channels=3, num_classes=1000):
-    return ResNet(34, Block, img_channels, num_classes)
+def ResNetEBM34(img_channels=3, num_classes=1000):
+    return ResNetEBM(34, Block, img_channels, num_classes)
 
 
-def ResNet50(img_channels=3, num_classes=1000):
-    return ResNet(50, Block, img_channels, num_classes)
+def ResNetEBM50(img_channels=3, num_classes=1000):
+    return ResNetEBM(50, Block, img_channels, num_classes)
 
 
-def ResNet101(img_channels=3, num_classes=1000):
-    return ResNet(101, Block, img_channels, num_classes)
+def ResNetEBM101(img_channels=3, num_classes=1000):
+    return ResNetEBM(101, Block, img_channels, num_classes)
 
 
-def ResNet152(img_channels=3, num_classes=1000):
-    return ResNet(152, Block, img_channels, num_classes)
+def ResNetEBM152(img_channels=3, num_classes=1000):
+    return ResNetEBM(152, Block, img_channels, num_classes)
 
 
 def test():
-    net = ResNet18(img_channels=3, num_classes=1000)
+    net = ResNetEBM18(img_channels=3, num_classes=1000)
     y = net(torch.randn(4, 3, 224, 224)).to("cuda")
     print(y.size())

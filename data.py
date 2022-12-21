@@ -96,15 +96,14 @@ class TestingData(torch.utils.data.IterableDataset):
         return radii
     
     
-np.random.seed(0)
 # np.random.rand(3)
-train = TestingData(1000, 2, 6)
+train = TestingData(100, 2, 6)
 train_dataloader = DataLoader(train, batch_size=3000)
 images, labels = next(iter(train_dataloader))
 unique, counts = np.unique(labels, return_counts=True)
 d = dict(zip(unique, counts))
 print(d[1]/ d[0])
-# plot_data(images,labels)
+plot_data(images,labels)
 
 # # generate data
 # data, labels = generate_data()
