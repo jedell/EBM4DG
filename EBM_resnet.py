@@ -5,6 +5,7 @@ import numpy as np
 import os
 from collections import OrderedDict
 
+# This is the standard ResNet arhcitecture with a domain adversarial classifer and using raw energy values instead of an activation function.
 
 class Block(nn.Module):
     def __init__(self, num_layers, in_channels, out_channels, identity_downsample=None, stride=1):
@@ -79,6 +80,7 @@ class ResNetEBM(nn.Module):
         self.layer4 = self.make_layers(num_layers, block, layers[3], intermediate_channels=512, stride=2)
 
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        # A simple classifer for domain adversarial training
         self.domain_classifier = nn.Linear(512 * self.expansion, 2)
         self.fc = nn.Linear(512 * self.expansion, num_classes)
 
@@ -95,6 +97,7 @@ class ResNetEBM(nn.Module):
 
         x = self.avgpool(x)
         x = x.reshape(x.shape[0], -1)
+        # Outpus in the energy-based model are not explicitly bound between 0 and 1
         cls_output = self.fc(x)
         dom_output = self.domain_classifier(x)
         return cls_output, dom_output
